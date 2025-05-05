@@ -116,6 +116,10 @@ func handleChatCompletions(c *gin.Context, config Config) {
 		},
 	}
 
+	// 声明变量用于存储请求体
+	var requestBody []byte
+	var jsonErr error
+	
 	// Add max_tokens if specified
 	if body.MaxTokens > 0 {
 		// Add max_tokens field dynamically
@@ -123,13 +127,13 @@ func handleChatCompletions(c *gin.Context, config Config) {
 		requestBytes, _ := json.Marshal(raycastRequest)
 		json.Unmarshal(requestBytes, &requestMap)
 		requestMap["max_tokens"] = body.MaxTokens
-		requestBody, err = json.Marshal(requestMap)
+		requestBody, jsonErr = json.Marshal(requestMap)
 	} else {
 		// Use the original raycastRequest if no max_tokens
-		requestBody, err = json.Marshal(raycastRequest)
+		requestBody, jsonErr = json.Marshal(raycastRequest)
 	}
 
-	if err != nil {
+	if jsonErr != nil {
 		c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Error: struct {
 				Message string `json:"message"`
@@ -138,7 +142,7 @@ func handleChatCompletions(c *gin.Context, config Config) {
 			}{
 				Message: "Failed to marshal request",
 				Type:    "server_error",
-				Details: err.Error(),
+				Details: jsonErr.Error(),
 			},
 		})
 		return
